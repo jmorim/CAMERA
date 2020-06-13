@@ -2244,7 +2244,11 @@ getPeaks <- function(xs, index=1){
       ts <- xs@peaks;
     } else {
       #get peak indices for sample index
-      peaki <- getPeaksIdxCol(xs,NULL)[,index]
+      if(index > 1) {
+        peaki <- getPeaksIdxCol(xs,NULL)[,index]
+      }else{
+        peaki <- getPeaksIdxCol(xs,NULL)
+      }
       #extract peaks from sample index
       ts <- xs@peaks[peaki,]
     }
