@@ -607,7 +607,7 @@ setMethod("findIsotopes", "xsAnnotate",
   ncl <- sum(sapply(object@pspectra, length));
 
   # get mz,rt and intensity values from peaktable
-  if(length(object@sample) > 1){
+  if(length(object@sample) > 1 || is.na(object@sample)){
     ##multiple sample or grouped single sample
     if(is.na(object@sample[1])){
       index <- 1:length(object@xcmsSet@filepaths);
