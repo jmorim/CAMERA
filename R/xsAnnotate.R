@@ -268,7 +268,7 @@ setMethod("groupFWHM", "xsAnnotate", function(object, sigma=6, perfwhm=0.6, intv
       }
       gvals    <- groupval(object@xcmsSet)[,index,drop=FALSE];
       peakmat  <- object@xcmsSet@peaks;
-      groupmat <- groups(object@xcmsSet);
+      groupmat <- xcms::groups(object@xcmsSet);
 
       #calculate highest peaks
       maxo      <- as.numeric(apply(gvals, 1, function(x, peakmat){
@@ -607,19 +607,28 @@ setMethod("findIsotopes", "xsAnnotate",
   ncl <- sum(sapply(object@pspectra, length));
 
   # get mz,rt and intensity values from peaktable
-  if(length(object@sample) > 1 || is.na(object@sample)){
-    ##multiple sample or grouped single sample
-    if(is.na(object@sample[1])){
-      index <- 1:length(object@xcmsSet@filepaths);
-    }else{
-      index <- object@sample;
-    }
-    cat("Generating peak matrix!\n");
-    mint     <- groupval(object@xcmsSet,value=intval)[,index,drop=FALSE];
-    imz <- object@groupInfo[, "mz", drop=FALSE];
-    irt <- object@groupInfo[, "rt", drop=FALSE];
+  # 4 potential cases: 1) single file, ungrouped, 2) single file, grouped,
+  #   3) multi files, ungrouped, 4) multi files, grouped
+  # if group() has been called previously and there are multiple files
+  if(nrow(xcms::groups(object@xcmsSet)) > 0 & length(object@sample) > 1 ||
+     nrow(xcms::groups(object@xcmsSet)) > 0 & is.na(object@sample[1])){
+    # Case 3+4, Case 3 shouldn't happen
+    # If multiple samples
+#    if(length(object@sample) > 1 || is.na(object@sample)){
+      # Case 4
+      if(is.na(object@sample[1])){
+        index <- 1:length(object@xcmsSet@filepaths);
+      }else{
+        index <- object@sample;
+      }
+      cat("Generating peak matrix!\n");
+      mint     <- groupval(object@xcmsSet,value=intval)[,index,drop=FALSE];
+      imz <- object@groupInfo[, "mz", drop=FALSE];
+      irt <- object@groupInfo[, "rt", drop=FALSE];
+#    }
+  # if group() not called or if single file
   }else{
-    ##one sample case
+    ##one ungrouped sample case
     cat("Generating peak matrix!\n");
     imz  <- object@groupInfo[, "mz", drop=FALSE];
     irt  <- object@groupInfo[, "rt", drop=FALSE];
@@ -635,7 +644,7 @@ setMethod("findIsotopes", "xsAnnotate",
   cat("Run isotope peak annotation\n % finished: ");
   lp <- -1;
 
-  #look for isotopes in every pseudospectra
+  #look for isotopes in every pseudospectrum
   for(i in seq(along = object@pspectra)){
     #get peak indizes for i-th pseudospectrum
     ipeak <- object@pspectra[[i]];
@@ -2197,7 +2206,7 @@ getPeaks_selection <- function(xs, method="medret", value="into"){
   # Testing if xcmsSet is grouped
   if (nrow(xs@groups) > 0 && length(xs@filepaths) > 1) {
     # get grouping information
-     groupmat <- groups(xs)
+     groupmat <- xcms::groups(xs)
      # generate data.frame for peaktable
      ts <- data.frame(cbind(groupmat, groupval(xs, method=method, value=value)), row.names = NULL)
      #rename column names
